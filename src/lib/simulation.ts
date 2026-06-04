@@ -5,17 +5,24 @@ import {
   INITIAL_OIL_BATCHES,
   INITIAL_ALERTS,
   INITIAL_INCIDENTS,
+  INITIAL_AUDIT_LOGS,
 } from "./pipeline-data";
+import { PROGRAMME } from "./organization";
+import { getIntegrationFeeds } from "./integrations";
 import type {
   Alert,
   AlertCategory,
   AlertSeverity,
+  AlertSource,
+  AuditLogEntry,
+  FieldReportInput,
   OilBatch,
   Sensor,
   TelemetrySnapshot,
   PipelineSegment,
   Station,
   Incident,
+  UserRole,
 } from "./types";
 
 let sensors: Sensor[] = structuredClone(INITIAL_SENSORS);
@@ -24,6 +31,7 @@ let oilBatches: OilBatch[] = structuredClone(INITIAL_OIL_BATCHES);
 let incidents: Incident[] = structuredClone(INITIAL_INCIDENTS);
 let segments: PipelineSegment[] = structuredClone(PIPELINE_SEGMENTS);
 let stations: Station[] = structuredClone(STATIONS);
+let auditLogs: AuditLogEntry[] = structuredClone(INITIAL_AUDIT_LOGS);
 
 const history: { t: number; pressure: number; flow: number; leakScore: number }[] = [];
 let tick = 0;
@@ -32,7 +40,32 @@ function rand(min: number, max: number) {
   return min + Math.random() * (max - min);
 }
 
-function maybePushAlert(alert: Omit<Alert, "id" | "createdAt" | "updatedAt" | "acknowledged" | "resolved">) {
+function logAudit(
+  entry: Omit<AuditLogEntry, "id" | "timestamp"> & { timestamp?: string }
+) {
+  auditLogs.unshift({
+    ...entry,
+    id: `aud-${Date.now()}`,
+    timestamp: entry.timestamp ?? new Date().toISOString(),
+  });
+  if (auditLogs.length > 100) auditLogs = auditLogs.slice(0, 100);
+}
+
+function buildProgramme() {
+  return {
+    corridor: PROGRAMME.corridor,
+    operator: PROGRAMME.operator,
+    partner: PROGRAMME.partner,
+    phase: PROGRAMME.pilotPhase,
+  };
+}
+
+function maybePushAlert(
+  alert: Omit<
+    Alert,
+    "id" | "createdAt" | "updatedAt" | "acknowledged" | "resolved" | "source"
+  > & { source?: AlertSource }
+) {
   if (Math.random() > 0.92) return;
   const now = new Date().toISOString();
   const exists = alerts.some(
@@ -41,6 +74,7 @@ function maybePushAlert(alert: Omit<Alert, "id" | "createdAt" | "updatedAt" | "a
   if (exists) return;
   alerts.unshift({
     ...alert,
+    source: alert.source ?? "scada",
     id: `alt-${Date.now()}`,
     acknowledged: false,
     resolved: false,
@@ -97,6 +131,8 @@ function simulateEvents() {
     maybePushAlert({
       category: "vandalism",
       severity: "high",
+      source: "cctv",
+      kmPost: 55,
       title: "Motion detected near valve assembly",
       message: "CCTV analytics flagged vehicle stop near BV-12 for >8 minutes.",
       segmentId: "seg-002",
@@ -107,6 +143,8 @@ function simulateEvents() {
     maybePushAlert({
       category: "leak",
       severity: "medium",
+      source: "scada",
+      kmPost: 61,
       title: "Pressure decay — segment watch",
       message: "Slow pressure decay observed over 30 min; within tolerance but trending.",
       segmentId: "seg-002",
@@ -117,6 +155,8 @@ function simulateEvents() {
     maybePushAlert({
       category: "power",
       severity: "medium",
+      source: "scada",
+      kmPost: 155,
       title: "Voltage sag — pump station",
       message: "Brief voltage sag at Pump Station Bravo; no trip event.",
       segmentId: "seg-004",
@@ -131,7 +171,9 @@ function computeKpis() {
   const flowSensors = sensors.filter((s) => s.type === "flow");
   const active = alerts.filter((a) => !a.resolved);
   const critical = active.filter((a) => a.severity === "critical" || a.severity === "high");
-  const powerTotal = stations.filter((s) => s.type === "substation" || s.type === "pump" || s.type === "metering");
+  const powerTotal = stations.filter(
+    (s) => s.type === "substation" || s.type === "pump" || s.type === "metering"
+  );
   const powerOnline = powerTotal.filter((s) => s.powerOnline);
 
   const acoustic = sensors.find((s) => s.type === "acoustic");
@@ -151,9 +193,7 @@ function computeKpis() {
   ).length;
 
   return {
-    throughputBpd: Math.round(
-      flowSensors.reduce((sum, s) => sum + s.value, 0) * 0.38
-    ),
+    throughputBpd: Math.round(flowSensors.reduce((sum, s) => sum + s.value, 0) * 0.38),
     pressureAvgBar: Number(
       (
         pressureSensors.reduce((sum, s) => sum + s.value, 0) /
@@ -171,6 +211,22 @@ function computeKpis() {
   };
 }
 
+function buildSnapshot(): TelemetrySnapshot {
+  return {
+    timestamp: new Date().toISOString(),
+    programme: buildProgramme(),
+    sensors,
+    alerts,
+    segments,
+    stations,
+    oilBatches,
+    incidents,
+    auditLogs: [...auditLogs],
+    integrations: getIntegrationFeeds(),
+    kpis: computeKpis(),
+  };
+}
+
 export function runSimulationTick(): TelemetrySnapshot {
   updateSensors();
   updateOilBatches();
@@ -185,47 +241,99 @@ export function runSimulationTick(): TelemetrySnapshot {
   });
   if (history.length > 120) history.shift();
 
-  return {
-    timestamp: new Date().toISOString(),
-    sensors,
-    alerts,
-    segments,
-    stations,
-    oilBatches,
-    incidents,
-    kpis,
-  };
+  return buildSnapshot();
 }
 
 export function getTelemetry(): TelemetrySnapshot {
-  return {
-    timestamp: new Date().toISOString(),
-    sensors,
-    alerts,
-    segments,
-    stations,
-    oilBatches,
-    incidents,
-    kpis: computeKpis(),
-  };
+  return buildSnapshot();
 }
 
 export function getHistory() {
   return [...history];
 }
 
-export function acknowledgeAlert(id: string) {
+export function acknowledgeAlert(
+  id: string,
+  actor: { actorId: string; actorName: string; role: UserRole }
+) {
   alerts = alerts.map((a) =>
     a.id === id ? { ...a, acknowledged: true, updatedAt: new Date().toISOString() } : a
   );
+  logAudit({
+    action: "acknowledge",
+    targetId: id,
+    summary: `Alert ${id} acknowledged`,
+    actorId: actor.actorId,
+    actorName: actor.actorName,
+    role: actor.role,
+  });
 }
 
-export function resolveAlert(id: string) {
+export function resolveAlert(
+  id: string,
+  actor: { actorId: string; actorName: string; role: UserRole }
+) {
   alerts = alerts.map((a) =>
     a.id === id
       ? { ...a, resolved: true, acknowledged: true, updatedAt: new Date().toISOString() }
       : a
   );
+  logAudit({
+    action: "resolve",
+    targetId: id,
+    summary: `Alert ${id} resolved and closed`,
+    actorId: actor.actorId,
+    actorName: actor.actorName,
+    role: actor.role,
+  });
+}
+
+export function submitFieldReport(input: FieldReportInput) {
+  const segment = segments.find((s) => s.id === input.segmentId);
+  const position = segment?.coordinates[Math.floor(segment.coordinates.length / 2)] ?? {
+    lat: 6.5,
+    lng: 8.0,
+  };
+
+  const alertId = `alt-${Date.now()}`;
+  const now = new Date().toISOString();
+  alerts.unshift({
+    id: alertId,
+    category: input.category,
+    severity: input.severity,
+    source: "field",
+    title: `Field report — ${input.category} at km ${input.kmPost}`,
+    message: input.description,
+    segmentId: input.segmentId,
+    kmPost: input.kmPost,
+    position,
+    reportedBy: input.reporterName,
+    acknowledged: false,
+    resolved: false,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  incidents.unshift({
+    id: `inc-${Date.now()}`,
+    alertId,
+    type: input.category,
+    status: "open",
+    assignedTo: "Dispatch — EWK corridor",
+    notes: `Submitted via PipeTwin field channel. Contact: ${input.reporterPhone ?? "N/A"}`,
+    createdAt: now,
+  });
+
+  logAudit({
+    action: "field_report",
+    targetId: alertId,
+    summary: `Field report at km ${input.kmPost} — ${input.category}`,
+    actorId: `field-${input.reporterName.replace(/\s/g, "-").toLowerCase()}`,
+    actorName: input.reporterName,
+    role: input.role,
+  });
+
+  return { alertId };
 }
 
 export function updateIncident(id: string, patch: Partial<Incident>) {

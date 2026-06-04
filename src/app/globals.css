@@ -60,3 +60,15 @@ body {
     line-height: 36px !important;
   }
 }
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  nav,
+  aside,
+  header:not(.print-visible) {
+    display: none !important;
+  }
+}

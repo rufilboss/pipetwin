@@ -25,7 +25,10 @@ export function DigitalTwinPanel({ segment, sensors, alerts }: DigitalTwinPanelP
     <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
       <h2 className="text-sm font-semibold text-white">{segment.name}</h2>
       <p className="text-xs text-slate-500">
-        {segment.from} → {segment.to} · {segment.lengthKm} km · Ø{segment.diameterMm} mm
+        {segment.assetCode} · km {segment.kmStart}–{segment.kmEnd} · Ø{segment.diameterMm} mm
+      </p>
+      <p className="text-[10px] text-slate-600">
+        {segment.from} → {segment.to} ({segment.lengthKm} km)
       </p>
 
       {/* Schematic twin */}

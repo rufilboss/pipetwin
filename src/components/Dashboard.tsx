@@ -12,7 +12,18 @@ import { DigitalTwinPanel } from "./DigitalTwinPanel";
 import { PowerStatus } from "./PowerStatus";
 import { SensorCharts } from "./SensorCharts";
 import { IncidentList } from "./IncidentList";
+import { PartnershipBanner } from "./PartnershipBanner";
+import { IntegrationPanel } from "./IntegrationPanel";
+import { AuditLogPanel } from "./AuditLogPanel";
+import { FieldReportForm } from "./FieldReportForm";
+import { ExecutiveSummary } from "./ExecutiveSummary";
 import { useTelemetry } from "@/hooks/useTelemetry";
+import { useRole } from "@/hooks/useRole";
+import {
+  canAcknowledgeAlerts,
+  canResolveAlerts,
+  canSubmitFieldReport,
+} from "@/lib/roles";
 import type { DashboardView } from "@/lib/types";
 
 const PipelineMap = dynamic(
@@ -27,14 +38,15 @@ const PipelineMap = dynamic(
   }
 );
 
-/** Space for mobile bottom nav + safe area */
 const MOBILE_MAIN_PB =
   "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] lg:pb-0";
 
 export function Dashboard() {
   const [view, setView] = useState<DashboardView>("overview");
   const [selectedSegmentId, setSelectedSegmentId] = useState<string>("seg-003");
-  const { data, connected, error, acknowledge, resolve } = useTelemetry();
+  const { role, setRole, actor } = useRole();
+  const { data, connected, error, acknowledge, resolve, submitFieldReport } =
+    useTelemetry(actor);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -49,11 +61,15 @@ export function Dashboard() {
   }
 
   const selectedSegment = data.segments.find((s) => s.id === selectedSegmentId);
-
   const mapHeightOverview = "min(50dvh, 420px)";
   const mapHeightTwin = "min(45dvh, 400px)";
   const mapHeightFullClass =
     "h-[calc(100dvh-3.5rem-4.75rem-env(safe-area-inset-bottom,0px))] lg:h-[calc(100vh-8rem)]";
+
+  const alertActions = {
+    canAcknowledge: canAcknowledgeAlerts(role),
+    canResolve: canResolveAlerts(role),
+  };
 
   return (
     <div className="flex min-h-dvh bg-slate-950 text-slate-200">
@@ -62,12 +78,14 @@ export function Dashboard() {
         onViewChange={setView}
         connected={connected}
         criticalCount={data.kpis.criticalAlerts}
+        role={role}
+        onRoleChange={setRole}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader
           view={view}
-          segmentCount={data.segments.length}
+          programme={data.programme}
           connected={connected}
           error={error}
           timestamp={data.timestamp}
@@ -78,6 +96,7 @@ export function Dashboard() {
         >
           {view === "overview" && (
             <div className="space-y-3 sm:space-y-4">
+              <PartnershipBanner />
               <KpiCards kpis={data.kpis} />
               <div className="grid gap-3 sm:gap-4 xl:grid-cols-3">
                 <div className="min-w-0 xl:col-span-2">
@@ -100,9 +119,11 @@ export function Dashboard() {
                     onAcknowledge={acknowledge}
                     onResolve={resolve}
                     compact
+                    {...alertActions}
                   />
                 </div>
               </div>
+              <IntegrationPanel feeds={data.integrations} />
               <SensorCharts sensors={data.sensors} />
             </div>
           )}
@@ -123,22 +144,38 @@ export function Dashboard() {
           )}
 
           {view === "alerts" && (
-            <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
-              <div className="min-w-0">
-                <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
-                  Alert queue
-                </h3>
-                <AlertPanel
-                  alerts={data.alerts}
-                  onAcknowledge={acknowledge}
-                  onResolve={resolve}
-                />
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+                <div className="min-w-0">
+                  <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+                    Alert queue
+                  </h3>
+                  <AlertPanel
+                    alerts={data.alerts}
+                    onAcknowledge={acknowledge}
+                    onResolve={resolve}
+                    {...alertActions}
+                  />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+                    Incidents
+                  </h3>
+                  <IncidentList incidents={data.incidents} alerts={data.alerts} />
+                </div>
               </div>
-              <div className="min-w-0">
+              {canSubmitFieldReport(role) && (
+                <FieldReportForm
+                  segments={data.segments}
+                  onSubmit={submitFieldReport}
+                  defaultReporter={actor.actorName}
+                />
+              )}
+              <div>
                 <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
-                  Incidents
+                  Audit trail (immutable log)
                 </h3>
-                <IncidentList incidents={data.incidents} alerts={data.alerts} />
+                <AuditLogPanel logs={data.auditLogs} />
               </div>
             </div>
           )}
@@ -171,6 +208,8 @@ export function Dashboard() {
           {view === "power" && <PowerStatus stations={data.stations} />}
 
           {view === "analytics" && <SensorCharts sensors={data.sensors} />}
+
+          {view === "executive" && <ExecutiveSummary data={data} role={role} />}
         </main>
       </div>
 

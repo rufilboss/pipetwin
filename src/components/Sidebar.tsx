@@ -3,16 +3,26 @@
 import { Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/lib/navigation";
-import type { DashboardView } from "@/lib/types";
+import type { DashboardView, UserRole } from "@/lib/types";
+import { RoleSelector } from "./RoleSelector";
 
 interface SidebarProps {
   view: DashboardView;
   onViewChange: (v: DashboardView) => void;
   connected: boolean;
   criticalCount: number;
+  role: UserRole;
+  onRoleChange: (r: UserRole) => void;
 }
 
-export function Sidebar({ view, onViewChange, connected, criticalCount }: SidebarProps) {
+export function Sidebar({
+  view,
+  onViewChange,
+  connected,
+  criticalCount,
+  role,
+  onRoleChange,
+}: SidebarProps) {
   return (
     <aside className="hidden w-56 shrink-0 flex-col border-r border-slate-800 bg-slate-950/90 lg:flex">
       <div className="border-b border-slate-800 px-4 py-5">
@@ -64,8 +74,11 @@ export function Sidebar({ view, onViewChange, connected, criticalCount }: Sideba
         ))}
       </nav>
 
-      <div className="border-t border-slate-800 p-4 text-[10px] text-slate-600">
-        EW-K pipeline corridor · demo simulation
+      <div className="border-t border-slate-800 p-3 space-y-3">
+        <RoleSelector role={role} onRoleChange={onRoleChange} />
+        <p className="text-[10px] text-slate-600">
+          UNILORIN × NNPC pilot · NPSL-EWK corridor
+        </p>
       </div>
     </aside>
   );

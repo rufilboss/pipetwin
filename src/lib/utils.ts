@@ -1,5 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
-import type { AlertSeverity, AlertCategory } from "./types";
+import type { AlertSeverity, AlertCategory, AlertSource, IntegrationFeed } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
@@ -37,4 +37,27 @@ export function formatTime(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+export function sourceLabel(source: AlertSource): string {
+  const map: Record<AlertSource, string> = {
+    scada: "SCADA",
+    das: "DAS / acoustic",
+    cctv: "CCTV",
+    ctma: "CTMA",
+    satellite: "Satellite",
+    field: "Field report",
+    manual: "Manual",
+  };
+  return map[source];
+}
+
+export function integrationStatusColor(status: IntegrationFeed["status"]): string {
+  const map: Record<IntegrationFeed["status"], string> = {
+    connected: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30",
+    degraded: "text-amber-400 bg-amber-500/15 border-amber-500/30",
+    disconnected: "text-red-400 bg-red-500/15 border-red-500/30",
+    pilot: "text-sky-400 bg-sky-500/15 border-sky-500/30",
+  };
+  return map[status];
 }

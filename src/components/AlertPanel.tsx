@@ -2,13 +2,15 @@
 
 import { Check, X } from "lucide-react";
 import type { Alert } from "@/lib/types";
-import { categoryLabel, cn, formatTime, severityColor } from "@/lib/utils";
+import { categoryLabel, cn, formatTime, severityColor, sourceLabel } from "@/lib/utils";
 
 interface AlertPanelProps {
   alerts: Alert[];
   onAcknowledge: (id: string) => void;
   onResolve: (id: string) => void;
   compact?: boolean;
+  canAcknowledge?: boolean;
+  canResolve?: boolean;
 }
 
 export function AlertPanel({
@@ -16,6 +18,8 @@ export function AlertPanel({
   onAcknowledge,
   onResolve,
   compact = false,
+  canAcknowledge = true,
+  canResolve = true,
 }: AlertPanelProps) {
   const active = alerts.filter((a) => !a.resolved);
 
@@ -52,6 +56,12 @@ export function AlertPanel({
                 <span className="text-[10px] text-slate-400">
                   {categoryLabel(alert.category)}
                 </span>
+                <span className="text-[10px] text-slate-600">
+                  {sourceLabel(alert.source)}
+                </span>
+                {alert.kmPost != null && (
+                  <span className="text-[10px] text-slate-600">km {alert.kmPost}</span>
+                )}
                 <span className="text-[10px] text-slate-500">
                   {formatTime(alert.createdAt)}
                 </span>
@@ -69,7 +79,7 @@ export function AlertPanel({
               </p>
             </div>
             <div className="flex shrink-0 gap-1">
-              {!alert.acknowledged && (
+              {!alert.acknowledged && canAcknowledge && (
                 <button
                   type="button"
                   title="Acknowledge"
@@ -79,6 +89,7 @@ export function AlertPanel({
                   <Check className="h-5 w-5 sm:h-4 sm:w-4" />
                 </button>
               )}
+              {canResolve && (
               <button
                 type="button"
                 title="Resolve"
@@ -87,6 +98,7 @@ export function AlertPanel({
               >
                 <X className="h-5 w-5 sm:h-4 sm:w-4" />
               </button>
+              )}
             </div>
           </div>
         </article>

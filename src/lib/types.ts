@@ -1,3 +1,7 @@
+export type UserRole = "operator" | "supervisor" | "executive" | "field_agent";
+
+export type AlertSource = "scada" | "das" | "cctv" | "ctma" | "satellite" | "field" | "manual";
+
 export type AlertSeverity = "critical" | "high" | "medium" | "low" | "info";
 export type AlertCategory =
   | "leak"
@@ -27,11 +31,14 @@ export interface GeoPoint {
 
 export interface PipelineSegment {
   id: string;
+  assetCode: string;
   name: string;
   from: string;
   to: string;
   coordinates: GeoPoint[];
   lengthKm: number;
+  kmStart: number;
+  kmEnd: number;
   diameterMm: number;
   capacityBpd: number;
   status: AssetStatus;
@@ -67,16 +74,51 @@ export interface Alert {
   id: string;
   category: AlertCategory;
   severity: AlertSeverity;
+  source: AlertSource;
   title: string;
   message: string;
   segmentId: string;
+  kmPost?: number;
   stationId?: string;
   sensorId?: string;
   position: GeoPoint;
+  reportedBy?: string;
   acknowledged: boolean;
   resolved: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  action: "acknowledge" | "resolve" | "field_report" | "login" | "export";
+  targetId?: string;
+  summary: string;
+  actorId: string;
+  actorName: string;
+  role: UserRole;
+  timestamp: string;
+}
+
+export interface IntegrationFeed {
+  id: string;
+  name: string;
+  type: "scada" | "pmcc" | "ctma" | "cctv" | "satellite" | "gis";
+  status: "connected" | "degraded" | "disconnected" | "pilot";
+  lastSync: string;
+  recordsPerHour?: number;
+  description: string;
+}
+
+export interface FieldReportInput {
+  category: AlertCategory;
+  severity: AlertSeverity;
+  segmentId: string;
+  kmPost: number;
+  description: string;
+  reporterName: string;
+  reporterPhone?: string;
+  role: UserRole;
 }
 
 export interface OilBatch {
@@ -106,12 +148,20 @@ export interface Incident {
 
 export interface TelemetrySnapshot {
   timestamp: string;
+  programme: {
+    corridor: string;
+    operator: string;
+    partner: string;
+    phase: string;
+  };
   sensors: Sensor[];
   alerts: Alert[];
   segments: PipelineSegment[];
   stations: Station[];
   oilBatches: OilBatch[];
   incidents: Incident[];
+  auditLogs: AuditLogEntry[];
+  integrations: IntegrationFeed[];
   kpis: {
     throughputBpd: number;
     pressureAvgBar: number;
@@ -133,4 +183,5 @@ export type DashboardView =
   | "oil-tracking"
   | "digital-twin"
   | "power"
-  | "analytics";
+  | "analytics"
+  | "executive";

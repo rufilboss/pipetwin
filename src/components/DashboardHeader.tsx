@@ -7,7 +7,12 @@ import type { DashboardView } from "@/lib/types";
 
 interface DashboardHeaderProps {
   view: DashboardView;
-  segmentCount: number;
+  programme: {
+    corridor: string;
+    operator: string;
+    partner: string;
+    phase: string;
+  };
   connected: boolean;
   error: string | null;
   timestamp: string;
@@ -15,14 +20,13 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({
   view,
-  segmentCount,
+  programme,
   connected,
   error,
   timestamp,
 }: DashboardHeaderProps) {
   return (
     <>
-      {/* Mobile top bar */}
       <header className="sticky top-0 z-40 shrink-0 border-b border-slate-800 bg-slate-950/95 px-3 py-2.5 backdrop-blur-lg lg:hidden">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
@@ -58,20 +62,21 @@ export function DashboardHeader({
         )}
       </header>
 
-      {/* Desktop header */}
       <header className="hidden shrink-0 items-center justify-between border-b border-slate-800 bg-slate-900/50 px-6 py-3 backdrop-blur lg:flex">
         <div>
           <h2 className="text-lg font-semibold text-white">{viewTitle(view)}</h2>
           <p className="text-xs text-slate-500">
-            Escravos–Warri–Kaduna trunk · {segmentCount} segments monitored
+            {programme.corridor} · {programme.operator}
           </p>
+          <p className="text-[10px] text-emerald-600/80">{programme.partner}</p>
         </div>
-        <div className="flex items-center gap-3 text-xs text-slate-500">
+        <div className="flex flex-col items-end gap-1 text-xs text-slate-500">
           {error && <span className="text-amber-500">{error}</span>}
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            {new Date(timestamp).toLocaleTimeString()}
+            {new Date(timestamp).toLocaleString()}
           </span>
+          <span className="text-[10px] text-slate-600">{programme.phase}</span>
         </div>
       </header>
     </>

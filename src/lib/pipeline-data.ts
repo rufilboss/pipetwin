@@ -5,6 +5,7 @@ import type {
   OilBatch,
   Alert,
   Incident,
+  AuditLogEntry,
 } from "./types";
 
 /** Demo corridor: Escravos–Warri–Kaduna trunk (simplified coordinates) */
@@ -56,55 +57,70 @@ function sliceRoute(start: number, end: number) {
 export const PIPELINE_SEGMENTS: PipelineSegment[] = [
   {
     id: "seg-001",
+    assetCode: "NPSL-EWK-01",
     name: "Escravos Terminal — Delta Junction",
     from: "Escravos",
     to: "Delta Junction",
     coordinates: sliceRoute(0, 7),
     lengthKm: 42,
+    kmStart: 0,
+    kmEnd: 42,
     diameterMm: 610,
     capacityBpd: 180000,
     status: "operational",
   },
   {
     id: "seg-002",
+    assetCode: "NPSL-EWK-02",
     name: "Delta Junction — Benin Ridge",
     from: "Delta Junction",
     to: "Benin Ridge",
     coordinates: sliceRoute(7, 14),
     lengthKm: 38,
+    kmStart: 42,
+    kmEnd: 80,
     diameterMm: 610,
     capacityBpd: 180000,
     status: "operational",
   },
   {
     id: "seg-003",
+    assetCode: "NPSL-EWK-03",
     name: "Benin Ridge — Auchi Pass",
     from: "Benin Ridge",
     to: "Auchi Pass",
     coordinates: sliceRoute(14, 21),
     lengthKm: 45,
+    kmStart: 80,
+    kmEnd: 125,
     diameterMm: 508,
     capacityBpd: 150000,
     status: "degraded",
   },
   {
     id: "seg-004",
+    assetCode: "NPSL-EWK-04",
     name: "Auchi Pass — Lokoja Hub",
     from: "Auchi Pass",
     to: "Lokoja Hub",
     coordinates: sliceRoute(21, 28),
     lengthKm: 52,
+    kmStart: 125,
+    kmEnd: 177,
     diameterMm: 508,
     capacityBpd: 150000,
     status: "operational",
   },
   {
     id: "seg-005",
+    assetCode: "NPSL-EWK-05",
     name: "Lokoja Hub — Kaduna Terminal",
     from: "Lokoja Hub",
     to: "Kaduna Terminal",
     coordinates: sliceRoute(28, 31),
     lengthKm: 28,
+    kmStart: 177,
+    kmEnd: 205,
     diameterMm: 406,
     capacityBpd: 120000,
     status: "operational",
@@ -257,11 +273,26 @@ export const INITIAL_OIL_BATCHES: OilBatch[] = [
   },
 ];
 
+export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
+  {
+    id: "aud-001",
+    action: "acknowledge",
+    targetId: "alt-003",
+    summary: "Alert alt-003 acknowledged by supervisor",
+    actorId: "usr-supervisor-01",
+    actorName: "A. Ibrahim (UNILORIN pilot)",
+    role: "supervisor",
+    timestamp: new Date(Date.now() - 28 * 60000).toISOString(),
+  },
+];
+
 export const INITIAL_ALERTS: Alert[] = [
   {
     id: "alt-001",
     category: "leak",
     severity: "high",
+    source: "das",
+    kmPost: 87,
     title: "Acoustic anomaly — possible leak",
     message:
       "Acoustic sensor sns-a-001 detected sustained high-frequency signature consistent with pinhole leak near km 87.",
@@ -277,6 +308,8 @@ export const INITIAL_ALERTS: Alert[] = [
     id: "alt-002",
     category: "vandalism",
     severity: "critical",
+    source: "scada",
+    kmPost: 98,
     title: "Fence breach — unauthorized access",
     message:
       "Perimeter fence sensor triggered at Auchi Pass. Ground penetration sensor corroborates excavation activity.",
@@ -292,6 +325,8 @@ export const INITIAL_ALERTS: Alert[] = [
     id: "alt-003",
     category: "power",
     severity: "high",
+    source: "scada",
+    kmPost: 142,
     title: "Substation offline — CM-07 on backup",
     message:
       "Grid supply at SS-North dropped below threshold. Custody metering station running on UPS; estimated 4h runtime.",
@@ -308,6 +343,8 @@ export const INITIAL_ALERTS: Alert[] = [
     id: "alt-004",
     category: "theft",
     severity: "medium",
+    source: "scada",
+    kmPost: 58,
     title: "Flow imbalance — suspected hot-tap",
     message:
       "Metered outflow 3.2% below upstream custody total over 6h window. Investigation recommended at Benin Ridge.",

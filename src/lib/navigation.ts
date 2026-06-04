@@ -7,6 +7,7 @@ import {
   Box,
   Zap,
   BarChart3,
+  FileText,
 } from "lucide-react";
 import type { DashboardView } from "./types";
 
@@ -23,6 +24,7 @@ export const NAV_ITEMS: {
   { id: "digital-twin", label: "Digital twin", shortLabel: "Twin", icon: Box },
   { id: "power", label: "Power grid", shortLabel: "Power", icon: Zap },
   { id: "analytics", label: "Analytics", shortLabel: "Stats", icon: BarChart3 },
+  { id: "executive", label: "Executive brief", shortLabel: "Brief", icon: FileText },
 ];
 
 export function viewTitle(view: DashboardView): string {

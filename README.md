@@ -1,26 +1,39 @@
 # PipeTwin — Oil Pipeline Digital Twin
 
-Real-time monitoring dashboard for oil pipeline operations: **vandalism detection**, **leak monitoring**, **oil batch tracking**, **power outages**, theft/hot-tap alerts, and segment-level **digital twin** views.
+**UNILORIN × NNPC** research pilot — real-time pipeline integrity monitoring for vandalism, leaks, oil theft, power outages, and custody tracking on the **NPSL-EWK** corridor (Escravos–Warri–Kaduna).
 
-## Features
+Built as an engineering platform suitable for academic demonstration and NNPC corridor pilot integration.
 
-| Module | Capabilities |
-|--------|----------------|
-| **Overview** | Live KPIs, pipeline map, priority alerts, pressure/flow charts |
-| **Pipeline map** | GIS view with segments, stations, alert markers (Carto dark basemap) |
-| **Alerts & incidents** | Acknowledge/resolve alerts, incident triage workflow |
-| **Oil tracking** | Batch progress, API gravity, sulfur, ETA along corridor |
-| **Digital twin** | Segment schematic + live sensor bindings |
-| **Power grid** | Substation/pump/metering online vs backup status |
-| **Analytics** | Integrity sensors (acoustic, ground intrusion, fence, vibration) |
+## Real-world features
+
+| Capability | Description |
+|------------|-------------|
+| **Role-based access** | Operator, supervisor, field agent, executive (read-only) |
+| **Audit trail** | Immutable log of acknowledge, resolve, and field reports |
+| **Field reporting** | CTMA-style incident submission → alert + incident + audit |
+| **Enterprise feeds** | PMCC, SCADA, CTMA, CCTV, satellite, GIS (pilot status panel) |
+| **Asset registry** | Segment codes (`NPSL-EWK-01`…), km chainage posts |
+| **Alert provenance** | Source tags: SCADA, DAS, CCTV, CTMA, field, satellite |
+| **Executive brief** | Board summary, ROI model, print/PDF export |
+| **Standards** | API 1130 / 1160, ISO 55001, PIA alignment (reference) |
+
+## Dashboard modules
+
+| View | Purpose |
+|------|---------|
+| Overview | KPIs, map, alerts, integration panel |
+| Pipeline map | Full GIS corridor |
+| Alerts & incidents | Queue, triage, field reports, audit log |
+| Oil tracking | Batch custody along line |
+| Digital twin | Segment schematic + sensors |
+| Power grid | Station grid / UPS status |
+| Analytics | Pressure, flow, integrity sensors |
+| Executive brief | Chairman-ready summary |
 
 ## Tech stack
 
-- **Next.js 16** (App Router) + TypeScript
-- **Tailwind CSS 4**
-- **Leaflet / react-leaflet** — pipeline GIS
-- **Recharts** — telemetry charts
-- **Server-Sent Events** — live simulation stream (`/api/stream`)
+- Next.js 16 · TypeScript · Tailwind CSS 4
+- Leaflet · Recharts · SSE live telemetry
 
 ## Quick start
 
@@ -29,38 +42,39 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). Use the sidebar **Session role** to test permissions.
 
 ## API
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /api/telemetry` | Snapshot of sensors, alerts, KPIs |
+| `GET /api/telemetry` | Full snapshot (programme, audit, integrations) |
 | `GET /api/stream` | SSE — updates every 2s |
-| `PATCH /api/alerts/:id` | `{ "action": "acknowledge" \| "resolve" }` |
+| `PATCH /api/alerts/:id` | `{ action, actorId, actorName, role }` |
+| `POST /api/reports` | Field incident report body (`FieldReportInput`) |
 
-## Production notes
+## Production path (NNPC pilot)
 
-This repo ships a **simulation engine** for demo and UX validation. For production:
-
-1. Replace `src/lib/simulation.ts` with adapters to SCADA (OPC-UA), PI System, or MQTT ingest.
-2. Persist alerts/incidents in PostgreSQL or TimescaleDB.
-3. Add auth (OIDC), RBAC, and audit logs for acknowledge/resolve actions.
-4. Wire real CCTV/analytics and DAS (distributed acoustic sensing) for leak and vandalism models.
+1. Replace `src/lib/simulation.ts` with OPC-UA / MQTT / PI adapters.
+2. Persist audit + alerts in PostgreSQL (append-only audit table).
+3. OIDC auth (NNPC Entra ID) — map to roles in `src/lib/roles.ts`.
+4. Connect PMCC, CTMA, and corridor SCADA via `src/lib/integrations.ts` adapters.
 
 ## Project structure
 
 ```
 src/
-├── app/api/          # REST + SSE
-├── components/       # Dashboard UI
-├── hooks/            # useTelemetry (EventSource)
+├── app/api/           # telemetry, stream, alerts, reports
+├── components/        # dashboard UI
+├── hooks/             # useTelemetry, useRole
 └── lib/
-    ├── pipeline-data.ts   # Static network model
-    ├── simulation.ts      # Live tick + events
-    └── types.ts
+    ├── organization.ts   # UNILORIN / NNPC programme metadata
+    ├── integrations.ts # enterprise feed registry
+    ├── roles.ts        # RBAC helpers
+    ├── pipeline-data.ts
+    └── simulation.ts
 ```
 
-## License
+## Academic use
 
-Private / internal use — adjust as needed.
+Present as **Phase 0 prototype** under the UNILORIN–NNPC partnership: simulated feeds with production-shaped data models, ready for one-corridor pilot deployment.
