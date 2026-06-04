@@ -1,8 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "./Sidebar";
+import { MobileNav } from "./MobileNav";
+import { DashboardHeader } from "./DashboardHeader";
 import { KpiCards } from "./KpiCards";
 import { AlertPanel } from "./AlertPanel";
 import { OilTracking } from "./OilTracking";
@@ -12,28 +14,35 @@ import { SensorCharts } from "./SensorCharts";
 import { IncidentList } from "./IncidentList";
 import { useTelemetry } from "@/hooks/useTelemetry";
 import type { DashboardView } from "@/lib/types";
-import { Clock } from "lucide-react";
 
 const PipelineMap = dynamic(
   () => import("./PipelineMap").then((m) => m.PipelineMap),
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full min-h-[400px] items-center justify-center rounded-xl border border-slate-800 bg-slate-900/40 text-sm text-slate-500">
+      <div className="flex h-[min(50dvh,420px)] min-h-[240px] items-center justify-center rounded-xl border border-slate-800 bg-slate-900/40 text-sm text-slate-500">
         Loading map…
       </div>
     ),
   }
 );
 
+/** Space for mobile bottom nav + safe area */
+const MOBILE_MAIN_PB =
+  "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] lg:pb-0";
+
 export function Dashboard() {
   const [view, setView] = useState<DashboardView>("overview");
   const [selectedSegmentId, setSelectedSegmentId] = useState<string>("seg-003");
   const { data, connected, error, acknowledge, resolve } = useTelemetry();
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [view]);
+
   if (!data) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-400">
+      <div className="flex min-h-dvh items-center justify-center bg-slate-950 px-4 text-center text-slate-400">
         Initializing PipeTwin SCADA…
       </div>
     );
@@ -41,8 +50,13 @@ export function Dashboard() {
 
   const selectedSegment = data.segments.find((s) => s.id === selectedSegmentId);
 
+  const mapHeightOverview = "min(50dvh, 420px)";
+  const mapHeightTwin = "min(45dvh, 400px)";
+  const mapHeightFullClass =
+    "h-[calc(100dvh-3.5rem-4.75rem-env(safe-area-inset-bottom,0px))] lg:h-[calc(100vh-8rem)]";
+
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-200">
+    <div className="flex min-h-dvh bg-slate-950 text-slate-200">
       <Sidebar
         view={view}
         onViewChange={setView}
@@ -50,31 +64,23 @@ export function Dashboard() {
         criticalCount={data.kpis.criticalAlerts}
       />
 
-      <main className="flex min-w-0 flex-1 flex-col">
-        <header className="flex shrink-0 items-center justify-between border-b border-slate-800 bg-slate-900/50 px-6 py-3 backdrop-blur">
-          <div>
-            <h2 className="text-lg font-semibold text-white capitalize">
-              {view.replace("-", " ")}
-            </h2>
-            <p className="text-xs text-slate-500">
-              Escravos–Warri–Kaduna trunk · {data.segments.length} segments monitored
-            </p>
-          </div>
-          <div className="flex items-center gap-3 text-xs text-slate-500">
-            {error && <span className="text-amber-500">{error}</span>}
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {new Date(data.timestamp).toLocaleTimeString()}
-            </span>
-          </div>
-        </header>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <DashboardHeader
+          view={view}
+          segmentCount={data.segments.length}
+          connected={connected}
+          error={error}
+          timestamp={data.timestamp}
+        />
 
-        <div className="flex-1 overflow-auto p-4 md:p-6">
+        <main
+          className={`flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 md:p-6 ${MOBILE_MAIN_PB}`}
+        >
           {view === "overview" && (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <KpiCards kpis={data.kpis} />
-              <div className="grid gap-4 xl:grid-cols-3">
-                <div className="xl:col-span-2">
+              <div className="grid gap-3 sm:gap-4 xl:grid-cols-3">
+                <div className="min-w-0 xl:col-span-2">
                   <PipelineMap
                     segments={data.segments}
                     stations={data.stations}
@@ -82,10 +88,10 @@ export function Dashboard() {
                     alerts={data.alerts}
                     selectedSegmentId={selectedSegmentId}
                     onSelectSegment={setSelectedSegmentId}
-                    height="420px"
+                    height={mapHeightOverview}
                   />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
                     Priority alerts
                   </h3>
@@ -102,20 +108,23 @@ export function Dashboard() {
           )}
 
           {view === "map" && (
-            <PipelineMap
-              segments={data.segments}
-              stations={data.stations}
-              sensors={data.sensors}
-              alerts={data.alerts}
-              selectedSegmentId={selectedSegmentId}
-              onSelectSegment={setSelectedSegmentId}
-              height="calc(100vh - 140px)"
-            />
+            <div className={`min-h-[280px] min-w-0 ${mapHeightFullClass}`}>
+              <PipelineMap
+                segments={data.segments}
+                stations={data.stations}
+                sensors={data.sensors}
+                alerts={data.alerts}
+                selectedSegmentId={selectedSegmentId}
+                onSelectSegment={setSelectedSegmentId}
+                height="100%"
+                className="h-full"
+              />
+            </div>
           )}
 
           {view === "alerts" && (
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div>
+            <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+              <div className="min-w-0">
                 <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
                   Alert queue
                 </h3>
@@ -125,7 +134,7 @@ export function Dashboard() {
                   onResolve={resolve}
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
                   Incidents
                 </h3>
@@ -139,8 +148,8 @@ export function Dashboard() {
           )}
 
           {view === "digital-twin" && (
-            <div className="grid gap-4 lg:grid-cols-2">
-              <div className="min-h-[400px]">
+            <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
+              <div className="min-h-[240px] min-w-0">
                 <PipelineMap
                   segments={data.segments}
                   stations={data.stations}
@@ -148,7 +157,7 @@ export function Dashboard() {
                   alerts={data.alerts}
                   selectedSegmentId={selectedSegmentId}
                   onSelectSegment={setSelectedSegmentId}
-                  height="400px"
+                  height={mapHeightTwin}
                 />
               </div>
               <DigitalTwinPanel
@@ -162,8 +171,14 @@ export function Dashboard() {
           {view === "power" && <PowerStatus stations={data.stations} />}
 
           {view === "analytics" && <SensorCharts sensors={data.sensors} />}
-        </div>
-      </main>
+        </main>
+      </div>
+
+      <MobileNav
+        view={view}
+        onViewChange={setView}
+        criticalCount={data.kpis.criticalAlerts}
+      />
     </div>
   );
 }

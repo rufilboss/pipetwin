@@ -3,6 +3,7 @@
 :root {
   --background: #020617;
   --foreground: #e2e8f0;
+  --mobile-nav-height: 4.75rem;
 }
 
 @theme inline {
@@ -12,10 +13,32 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Recharts needs explicit min dimensions on mobile */
+.chart-container {
+  min-width: 0;
+  width: 100%;
+}
+
+/* Hide horizontal scrollbar on bottom nav while keeping scroll */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 /* Leaflet popup contrast on dark map */
@@ -26,4 +49,14 @@ body {
 .leaflet-container {
   font-family: inherit;
   background: #0f172a;
+  touch-action: pan-x pan-y;
+}
+
+/* Larger tap targets on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .leaflet-control-zoom a {
+    width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+  }
 }

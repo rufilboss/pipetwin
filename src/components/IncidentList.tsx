@@ -25,7 +25,7 @@ export function IncidentList({ incidents, alerts }: IncidentListProps) {
         return (
           <div
             key={inc.id}
-            className="rounded-xl border border-slate-800 bg-slate-900/60 p-4"
+            className="rounded-xl border border-slate-800 bg-slate-900/60 p-3 sm:p-4"
           >
             <div className="flex flex-wrap items-center gap-2">
               <span

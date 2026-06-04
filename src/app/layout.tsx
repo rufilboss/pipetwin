@@ -18,6 +18,13 @@ export const metadata: Metadata = {
     "Real-time monitoring for pipeline vandalism, leaks, oil tracking, power outages, and SCADA integrity.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#020617",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,7 +35,9 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-slate-950 text-slate-200">{children}</body>
+      <body className="min-h-dvh bg-slate-950 text-slate-200 overscroll-none">
+        {children}
+      </body>
     </html>
   );
 }

@@ -43,7 +43,7 @@ export function OilTracking({ batches, segments }: OilTrackingProps) {
             <span>{b.destination}</span>
           </div>
 
-          <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="mt-3 grid grid-cols-1 gap-2 text-center text-xs sm:grid-cols-3">
             <div className="rounded-lg bg-slate-800/50 p-2">
               <p className="text-slate-500">Volume</p>
               <p className="font-semibold text-white tabular-nums">
@@ -65,8 +65,10 @@ export function OilTracking({ batches, segments }: OilTrackingProps) {
           </div>
 
           <div className="mt-3">
-            <div className="flex justify-between text-[10px] text-slate-500">
-              <span>{segMap[b.currentSegmentId] ?? b.currentSegmentId}</span>
+            <div className="flex justify-between gap-2 text-[10px] text-slate-500">
+              <span className="min-w-0 truncate">
+                {segMap[b.currentSegmentId] ?? b.currentSegmentId}
+              </span>
               <span>{b.progressPct}%</span>
             </div>
             <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-800">

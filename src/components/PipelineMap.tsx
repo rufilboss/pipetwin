@@ -10,6 +10,7 @@ import {
   useMap,
 } from "react-leaflet";
 import type { Alert, PipelineSegment, Sensor, Station } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import "leaflet/dist/leaflet.css";
 
 function FitBounds({ segments }: { segments: PipelineSegment[] }) {
@@ -38,6 +39,7 @@ interface PipelineMapProps {
   selectedSegmentId?: string;
   onSelectSegment?: (id: string) => void;
   height?: string;
+  className?: string;
 }
 
 export function PipelineMap({
@@ -48,6 +50,7 @@ export function PipelineMap({
   selectedSegmentId,
   onSelectSegment,
   height = "100%",
+  className,
 }: PipelineMapProps) {
   const center = useMemo((): [number, number] => {
     const first = segments[0]?.coordinates[0];
@@ -57,7 +60,13 @@ export function PipelineMap({
   const activeAlerts = alerts.filter((a) => !a.resolved);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-800" style={{ height }}>
+    <div
+      className={cn(
+        "min-h-[240px] overflow-hidden rounded-xl border border-slate-800",
+        className
+      )}
+      style={{ height }}
+    >
       <MapContainer
         center={center}
         zoom={7}

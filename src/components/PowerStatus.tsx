@@ -36,7 +36,7 @@ export function PowerStatus({ stations }: PowerStatusProps) {
               <BatteryWarning className="h-5 w-5 text-orange-400" />
             )}
           </div>
-          <div className="mt-3 flex items-center gap-4 text-xs">
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs sm:gap-4">
             <span
               className={cn(
                 "rounded-full px-2 py-0.5 font-medium",

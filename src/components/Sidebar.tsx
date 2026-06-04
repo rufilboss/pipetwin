@@ -1,27 +1,9 @@
 "use client";
 
-import {
-  LayoutDashboard,
-  Map,
-  Bell,
-  Droplets,
-  Box,
-  Zap,
-  BarChart3,
-  Radio,
-} from "lucide-react";
+import { Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NAV_ITEMS } from "@/lib/navigation";
 import type { DashboardView } from "@/lib/types";
-
-const NAV: { id: DashboardView; label: string; icon: typeof LayoutDashboard }[] = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "map", label: "Pipeline map", icon: Map },
-  { id: "alerts", label: "Alerts & incidents", icon: Bell },
-  { id: "oil-tracking", label: "Oil tracking", icon: Droplets },
-  { id: "digital-twin", label: "Digital twin", icon: Box },
-  { id: "power", label: "Power grid", icon: Zap },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
-];
 
 interface SidebarProps {
   view: DashboardView;
@@ -32,7 +14,7 @@ interface SidebarProps {
 
 export function Sidebar({ view, onViewChange, connected, criticalCount }: SidebarProps) {
   return (
-    <aside className="flex w-56 shrink-0 flex-col border-r border-slate-800 bg-slate-950/90">
+    <aside className="hidden w-56 shrink-0 flex-col border-r border-slate-800 bg-slate-950/90 lg:flex">
       <div className="border-b border-slate-800 px-4 py-5">
         <div className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600/20 ring-1 ring-emerald-500/40">
@@ -58,8 +40,8 @@ export function Sidebar({ view, onViewChange, connected, criticalCount }: Sideba
         </div>
       </div>
 
-      <nav className="flex-1 space-y-0.5 p-2">
-        {NAV.map(({ id, label, icon: Icon }) => (
+      <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
+        {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"

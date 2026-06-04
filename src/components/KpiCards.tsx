@@ -64,21 +64,23 @@ export function KpiCards({ kpis }: KpiCardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-3 xl:grid-cols-6">
       {cards.map((c) => (
         <div
           key={c.label}
-          className="rounded-xl border border-slate-800 bg-slate-900/60 p-3 backdrop-blur"
+          className="rounded-xl border border-slate-800 bg-slate-900/60 p-2.5 sm:p-3 backdrop-blur"
         >
-          <div className="flex items-start justify-between">
-            <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+          <div className="flex items-start justify-between gap-1">
+            <span className="text-[10px] font-medium uppercase leading-tight tracking-wide text-slate-500 sm:text-[11px]">
               {c.label}
             </span>
-            <c.icon className={`h-4 w-4 ${c.tone}`} />
+            <c.icon className={`h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 ${c.tone}`} />
           </div>
-          <p className="mt-2 text-2xl font-semibold tabular-nums text-white">
+          <p className="mt-1.5 text-xl font-semibold tabular-nums text-white sm:mt-2 sm:text-2xl">
             {c.value}
-            <span className="ml-1 text-xs font-normal text-slate-500">{c.unit}</span>
+            <span className="ml-0.5 block text-[10px] font-normal text-slate-500 sm:ml-1 sm:inline sm:text-xs">
+              {c.unit}
+            </span>
           </p>
         </div>
       ))}

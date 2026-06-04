@@ -55,7 +55,7 @@ export function DigitalTwinPanel({ segment, sensors, alerts }: DigitalTwinPanelP
         <div className="absolute bottom-2 left-3 text-[10px] text-slate-500">SCADA twin · live</div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {segSensors.map((s) => (
           <div
             key={s.id}
